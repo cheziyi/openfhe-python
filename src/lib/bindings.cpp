@@ -6,6 +6,7 @@
 #include <pybind11/operators.h>
 #include <pybind11/iostream.h>
 #include <iostream>
+#include <sstream>
 #include <map>
 #include "openfhe.h"
 #include "key/key-ser.h"
@@ -759,6 +760,14 @@ void bind_crypto_context(py::module &m)
                 return res; },
             cc_SerializeEvalAutomorphismKey_docs,
             py::arg("filename"), py::arg("sertype"), py::arg("id") = "")
+        .def_static( // SerializeEvalAutomorphismKey - JSON String
+            "SerializeEvalAutomorphismKeyToString", [](std::string id = "")
+            {
+                std::stringstream s;
+                CryptoContextImpl<DCRTPoly>::SerializeEvalAutomorphismKey<SerType::SERJSON>(s, SerType::JSON, id);
+                return s.str(); },
+            cc_SerializeEvalAutomorphismKey_docs,
+            py::arg("id") = "")
         .def_static("DeserializeEvalMultKey", // DeserializeEvalMultKey - Binary
         [](const std::string &filename, const SerType::SERBINARY &sertype)
                     {
@@ -808,7 +817,17 @@ void bind_crypto_context(py::module &m)
                         res = CryptoContextImpl<DCRTPoly>::DeserializeEvalAutomorphismKey<SerType::SERJSON>(erkeys, sertype);
                         return res; },
                         cc_DeserializeEvalAutomorphismKey_docs,
-                        py::arg("filename"), py::arg("sertype"));
+                        py::arg("filename"), py::arg("sertype"))
+        .def_static("DeserializeEvalAutomorphismKeyFromString", // DeserializeEvalAutomorphismKey - JSON String
+        [](const std::string &json)
+                    {
+                        std::stringstream s;
+                        s << json;
+                        bool res;
+                        res = CryptoContextImpl<DCRTPoly>::DeserializeEvalAutomorphismKey<SerType::SERJSON>(s, SerType::JSON);
+                        return res; },
+                        cc_DeserializeEvalAutomorphismKey_docs,
+                        py::arg("json"));
 
     // Generator Functions
     m.def("GenCryptoContext", &GenCryptoContext<CryptoContextBFVRNS>,
